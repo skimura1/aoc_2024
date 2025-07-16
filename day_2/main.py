@@ -1,44 +1,67 @@
-def part_1(report: list[int]):
-    decreasing = False
-    dampener = True
-    if report[0] - report[-1] > 0:
-        decreasing = True
-    left = 0
-    right = 1
-    while right < len(report):
-        prev = report[left]
-        curr = report[right]
-        diff = prev - curr
-        bad_level = bad_level_check(decreasing, diff)
+def check_safety_report(report: list[int]):
+    increasing = False
+    if report[0] - report[-1] < 0:
+        increasing = True
 
-        if bad_level and dampener:
-            right += 1
-            dampener = False
-            continue
+    for i in range(1, len(report)):
+        prev = report[i - 1]
+        curr = report[i]
 
-        if bad_level and not dampener:
-            return False
+        if not is_gradual_change(prev, curr, increasing):
+            return False, i
 
-        left += 1
-        right += 1
-
-    return True
+    return True, -1
 
 
-def bad_level_check(decreasing: bool, diff: int):
-    if decreasing and (diff >= 1 and diff <= 3):
-        return False
-    elif not decreasing and (diff >= -3 and diff <= -1):
+def is_gradual_change(prev_level: int, curr_level: int, is_increasing: bool) -> bool:
+    diff = curr_level - prev_level
+    # Check absolute difference constraint: at least 1 and at most 3
+    if not (1 <= abs(diff) <= 3):
         return False
 
-    return True
+    # Check consistency with overall trend (increasing or decreasing)
+    if is_increasing:
+        return diff > 0
+    else:
+        return diff < 0
+
+
+def check_safety_with_dampener(report: list[int], idx: int) -> bool:
+    # Try removing the element at idx
+    temp_report = report[:idx] + report[idx + 1:]
+    safe, _ = check_safety_report(temp_report)  # Fixed the unpacking
+    if safe:
+        return True
+    
+    # Also try removing the previous element (idx-1) if it exists
+    if idx > 0:
+        temp_report = report[:idx-1] + report[idx:]
+        safe, _ = check_safety_report(temp_report)
+        if safe:
+            return True
+    
+    # Try removing the first element (direction might be wrong)
+    if len(report) > 1:
+        temp_report = report[1:]
+        safe, _ = check_safety_report(temp_report)
+        if safe:
+            return True
+    
+    return False
 
 
 if __name__ == "__main__":
-    safe_count = 0
+    safe_count_part_1 = 0
+    safe_count_part_2 = 0
     with open("input.txt", "r") as f:
         for line in f:
-            if part_1(list(map(int, line.split()))):
-                safe_count += 1
+            report = list(map(int, line.split()))
+            safe, idx = check_safety_report(report)
+            if safe:
+                safe_count_part_1 += 1
+                safe_count_part_2 += 1
+            elif check_safety_with_dampener(report, idx):
+                safe_count_part_2 += 1
 
-    print(safe_count)
+    print(safe_count_part_1)
+    print(safe_count_part_2)
