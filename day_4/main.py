@@ -1,49 +1,57 @@
-def check_xmas(array: list[list[str]], col: int, row: int) -> int:
-    neighbors = []
-    rows = len(array)
-    cols = len(array[0])
+from collections import defaultdict
+
+def read_input():
+    with open('./input.txt', 'r') as f:
+        puzzle_input = f.read().strip().splitlines()
+        return [list(row) for row in puzzle_input]
+
+
+def check_xmas(grid: list[list[str]]) -> int:
+    keyword = "XMAS"
+    target_length = len(keyword)
     count = 0
-    left, right = 1, 1
+    rows = len(grid)
+    cols = len(grid[0])
+    directions = [(0, 1), (0, -1), (1, 0), (-1, 0), (1, 1), (1, -1), (-1, 1), (-1, -1)]
 
-    directions = [
-        (left, right),
-        (left, -right),
-        (-left, right),
-        (-left, -right),
-        (0, right),
-        (left, 0),
-        (0, -right),
-        (-left, 0),
-    ]
+    def is_valid_direction(row, col, dr, dc):
+        for i in range(target_length):
+            r = row + i * dr
+            c = col + i * dc
+            if not (0 <= r < rows and 0 <= c < cols) or grid[r][c] != keyword[i]:
+                return False
+        return True
+ 
 
-    for dr, dc in directions:
-        substring = []
-        for i in range(4):
-            r, c = row + (dr * i), col + (dc * i)
-            if 0 <= r < rows and 0 <= c < cols:
-                substring.append(array[r][c])
-        word = "".join(substring)
-        neighbors.append(word)
+    for row in range(rows):
+        for col in range(cols):
+            for dr, dc in directions:
+                if is_valid_direction(row, col, dr, dc):
+                    count += 1
 
-    for neighbor in neighbors:
-        if neighbor == "XMAS":
-            count += 1
+    return count
+
+
+def check_x_mas(grid):
+    count = 0
+    rows = len(grid)
+    cols = len(grid[0])
+
+    for r in range(1, rows - 1):
+        for c in range(1, cols - 1):
+            if grid[r][c] != "A":
+                continue
+            corners = [grid[r - 1][c - 1], grid[r - 1][c + 1], grid[r + 1][c + 1], grid[r + 1][c - 1]]
+            if "".join(corners) in ["MMSS", "MSSM", "SSMM", "SMMS"]:
+                count += 1
 
     return count
 
 
 # When X is encounterd, we check surrounding characters if there is an M, then in that direction of M, we check if A and S exist
 if __name__ == "__main__":
-    count_part_1 = 0
-
-    input_array = []
-    with open("input.txt", "r") as f:
-        for line in f:
-            input_array.append(list(line.strip()))
-
-        for x, _ in enumerate(input_array):
-            for y, y_char in enumerate(input_array[0]):
-                if y_char == "X":
-                    count_part_1 += check_xmas(input_array, x, y)
-
-    print(count_part_1)
+    input = read_input()
+    result_1 = check_xmas(input)
+    result_2 = check_x_mas(input)
+    print(result_1)
+    print(result_2)
